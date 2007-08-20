@@ -14,7 +14,7 @@ The front-end component is reusable and customizable. The full source code is av
 
 This is how the GWT Advanced Table looks like:
 
-
+[http://gwt-advanced-table.googlecode.com/files/gwt-advanced-table-screenshot.png]
 
 = How to run the example =
 
