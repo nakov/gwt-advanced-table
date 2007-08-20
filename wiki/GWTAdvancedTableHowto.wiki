@@ -1,4 +1,4 @@
-#summary GWT Advanced Table - GWT table widget supporting paging, sorting and filtering
+GWT Advanced Table - GWT table widget supporting paging, sorting and filtering
 
 
 = Introduction =
