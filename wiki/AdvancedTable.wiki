@@ -1,0 +1,21 @@
+/**
+ * AdvancedTable is GWT table widget that supports data paging, filtering
+ * and column sorting. Paging, filtering and sorting are done by the server
+ * side. The table uses a data provider, the class TableModelService. 
+ * 
+ * How to use it:
+ * 
+ * AdvancedTable table = new AdvancedTable();
+ * TableModelServiceAsync someTableService =
+ *     <create table model service async>;
+ * table.setTableModelService(usersTableService);
+ * RootPanel.get().add(table);
+ * 
+ * (c) 2007 by Svetlin Nakov - http://www.nakov.com
+ * National Academy for Software Development - http://academy.devbg.org 
+ * This software is freeware. Use it at your own risk.
+ */
+
+public class AdvancedTable extends Composite {
+    // Download the source code to look inside this class.
+}
