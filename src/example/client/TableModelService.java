@@ -12,6 +12,8 @@
  * The client call getRowsCount() and getRows() with the same filter. The
  * implementing class can use database or other back-end as data source.
  * 
+ * The first table column is considered row identifier (primary key).
+ * 
  * (c) 2007 by Svetlin Nakov - http://www.nakov.com
  * National Academy for Software Development - http://academy.devbg.org 
  * This software is freeware. Use it at your own risk.

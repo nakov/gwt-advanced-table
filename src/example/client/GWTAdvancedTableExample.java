@@ -21,6 +21,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class GWTAdvancedTableExample implements EntryPoint {
+	
+	private Label labelMessages;
 
 	public void onModuleLoad() {
 		RootPanel rootPanel = RootPanel.get();
@@ -28,7 +30,13 @@ public class GWTAdvancedTableExample implements EntryPoint {
 		final AdvancedTable table = new AdvancedTable();
 		TableModelServiceAsync usersTableService =
 			ServiceUtils.getTableModelServiceAsync();
+		//table.setFirstColumnVisible(false);
 		table.setTableModelService(usersTableService);
+		table.addRowSelectionListener(new RowSelectionListener() {
+			public void onRowSelected(AdvancedTable sender, String rowId) {
+				labelMessages.setText("Row " + rowId + " selected.");
+			}
+		});
 		
 		rootPanel.add(table, 11, 65);
 		table.setSize("402px", "127px");
@@ -51,10 +59,11 @@ public class GWTAdvancedTableExample implements EntryPoint {
 		horizontalPanel.add(buttonApplyFilter);
 		buttonApplyFilter.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
-				DataFilter filter = new DataFilter("keyword", 
-					textBoxFilter.getText());
+				String filterText = textBoxFilter.getText();
+				DataFilter filter = new DataFilter("keyword", filterText); 
 				DataFilter[] filters = {filter};
 				table.applyFilters(filters);
+				labelMessages.setText("Filter '" + filterText +"' applied.");
 			}
 		});
 		buttonApplyFilter.setWidth("100");
@@ -68,6 +77,7 @@ public class GWTAdvancedTableExample implements EntryPoint {
 			public void onClick(Widget sender) {
 				table.applyFilters(null);
 				textBoxFilter.setText("");
+				labelMessages.setText("Filter cleaned.");
 			}
 		});
 		clearFilterButton.setWidth("100");
@@ -80,7 +90,12 @@ public class GWTAdvancedTableExample implements EntryPoint {
 		final Label labelCopyright = new Label("(c) 2007 by Svetlin Nakov");
 		rootPanel.add(labelCopyright, 236, 10);
 		labelCopyright.setSize("176px", "19px");
-		labelCopyright.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+		labelCopyright.setHorizontalAlignment(
+			HasHorizontalAlignment.ALIGN_RIGHT);
+
+		this.labelMessages = new Label("Event messages will appear here.");
+		rootPanel.add(this.labelMessages, 11, 243);
+		labelMessages.setSize("402px", "19px");
 	}
 
 }

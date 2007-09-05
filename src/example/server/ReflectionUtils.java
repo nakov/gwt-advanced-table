@@ -28,8 +28,13 @@ public class ReflectionUtils {
 	
 	public static String getPropertyStringValue(Object obj, String propertyName) {
 		Object value = getPropertyValue(obj, propertyName);
-		String valueStr = value.toString();
-		return valueStr;
+		if (value == null) {
+			return null;
+		} 
+		else {
+			String valueStr = value.toString();
+			return valueStr;
+		}
 	}
 	
 }

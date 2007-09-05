@@ -26,16 +26,25 @@ public class UsersTableModelServiceImpl extends RemoteServiceServlet implements
 
 	private TableColumn[] columns = new TableColumn[] {
 			new TableColumn("Id", "#"),
-			new TableColumn("FirstName", "First name"),
-			new TableColumn("LastName", "Last name") };
+			new TableColumn("FirstName", "First Name"),
+			new TableColumn("LastName", "Last Name") };
 
-	private User[] allUsers = new User[] { new User(1, "Pesho", "Kirov"),
-			new User(2, "Kiro", "Gogov"), new User(3, "Ivan", "Petrov"),
-			new User(4, "Ivan", "Ivanov"), new User(5, "Kiro", "Mentata"),
-			new User(6, "Mimi", "Kakina"), new User(7, "Kaka", "Mara"),
-			new User(8, "Ded", "Moroz"), new User(9, "Bay", "Ivan"),
-			new User(10, "Pencho", "Penchev"), new User(11, "Mityu", "Mitkov"),
-			new User(12, "Bat", "Sali"), };
+	private User[] allUsers = new User[] { 
+		new User(1, "Pesho", "Kirov"),
+		new User(2, "Kiro", "Gogov"), 
+		new User(3, "Ivan", "Petrov"),
+		new User(4, "Ivan", "Ivanov"), 
+		new User(5, "Kiro", "Mentata"),
+		new User(6, "Mimi", "Kakina"), 
+		new User(7, "Kaka", "Mara"),
+		new User(8, "Ded", "Moroz"), 
+		new User(9, "Bay", "Ivan"),
+		new User(10, "Pencho", "Penchev"), 
+		new User(11, "Mityu", "Mitkov"),
+		new User(12, "Bat", "Sali"),
+		new User(13, "Kiro", null),
+		new User(14, null, "Goshev")
+	};
 
 	private List<User> filteredUsers;
 
@@ -92,10 +101,18 @@ public class UsersTableModelServiceImpl extends RemoteServiceServlet implements
 			}
 		} else {
 			// Simulate data filtering
-			String keyword = filters[0].getValue();
+			String keyword = filters[0].getValue().toUpperCase();
 			for (User user : this.allUsers) {
-				if (user.getFirstName().contains(keyword)
-						|| user.getLastName().contains(keyword)) {
+				String firstName = user.getFirstName();
+				if (firstName == null) {
+					firstName = "";
+				}
+				String lastName = user.getLastName();
+				if (lastName == null) {
+					lastName = "";
+				}
+				if (firstName.toUpperCase().contains(keyword) || 
+						lastName.toUpperCase().contains(keyword)) {
 					this.filteredUsers.add(user);
 				}
 			}

@@ -17,8 +17,7 @@ public class TableColumn implements IsSerializable {
 	private String name;
 	private String title;
 	
-	public TableColumn()
-	{
+	public TableColumn() {
 	}
 	
 	public TableColumn(String name, String title) {
