@@ -28,7 +28,14 @@ public class UserComparator implements Comparator<User> {
 		Comparable column2 = (Comparable)
 			ReflectionUtils.getPropertyValue(
 			user2, this.sortColumn);
-		int compareResult = column1.compareTo(column2);
+		int compareResult = -1;
+		if (column1 != null) {
+			if (column2 != null) {
+				compareResult = column1.compareTo(column2);
+			} else {
+				compareResult = 1;
+			}
+		}		 
 		if (!this.sortingOrder) {
 			compareResult = -1 * compareResult;
 		}

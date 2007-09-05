@@ -18,6 +18,8 @@
 
 package example.client;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -32,6 +34,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SourcesTableEvents;
 import com.google.gwt.user.client.ui.TableListener;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 
 public class AdvancedTable extends Composite {
 	
@@ -41,6 +44,10 @@ public class AdvancedTable extends Composite {
 	private static final int STATUS_WAIT = 1003;
 	private static final String SORT_ASC_SYMBOL = " \u25b2";
 	private static final String SORT_DESC_SYMBOL = " \u25bc";
+	private static final int NO_ROW_SELECTED = -1;
+	private static final String DEFAULT_ROW_STYLE = "advancedTableRow";
+	private static final String SELECTED_ROW_STYLE = "advancedTableSelectedRow";
+	private static final String NULL_DISPLAY_VALUE = " ";
 
 	private final Grid grid;
 	private final Label statusLabel;
@@ -49,7 +56,10 @@ public class AdvancedTable extends Composite {
 	private final Button buttonNextPage;
 	private final Button buttonLastPage;
 	
+	private ArrayList rowSelectionListeners;
+	
 	private int pageSize = DEFAULT_PAGE_SIZE;
+	private boolean firstColumnVisible = true;
 	private TableModelServiceAsync tableModelService;
 	private TableColumn[] columns;
 	private DataFilter[] filters;
@@ -60,6 +70,7 @@ public class AdvancedTable extends Composite {
 	private int currentPageIndex;
 	private String sortColumnName;
 	private boolean sortOrder;
+	private int selectedRowIndex;
 	
 	public AdvancedTable() {
 		super();
@@ -87,7 +98,8 @@ public class AdvancedTable extends Composite {
 		final Button buttonRefresh = new Button();
 		navigationPanel.add(buttonRefresh);
 		buttonRefresh.setSize("70", "23");
-		navigationPanel.setCellVerticalAlignment(buttonRefresh, HasVerticalAlignment.ALIGN_MIDDLE);
+		navigationPanel.setCellVerticalAlignment(buttonRefresh, 
+			HasVerticalAlignment.ALIGN_MIDDLE);
 		buttonRefresh.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonRefreshClicked();
@@ -106,7 +118,8 @@ public class AdvancedTable extends Composite {
 		buttonFirstPage = new Button();
 		navigationPanel.add(buttonFirstPage);
 		buttonFirstPage.setSize("25", "23");
-		navigationPanel.setCellVerticalAlignment(buttonFirstPage, HasVerticalAlignment.ALIGN_MIDDLE);
+		navigationPanel.setCellVerticalAlignment(buttonFirstPage, 
+			HasVerticalAlignment.ALIGN_MIDDLE);
 		buttonFirstPage.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonFirstPageClicked();
@@ -120,7 +133,8 @@ public class AdvancedTable extends Composite {
 		buttonPrevPage = new Button();
 		navigationPanel.add(buttonPrevPage);
 		buttonPrevPage.setSize("20", "23");
-		navigationPanel.setCellVerticalAlignment(buttonPrevPage, HasVerticalAlignment.ALIGN_MIDDLE);
+		navigationPanel.setCellVerticalAlignment(buttonPrevPage, 
+			HasVerticalAlignment.ALIGN_MIDDLE);
 		buttonPrevPage.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonPrevPageClicked();
@@ -134,7 +148,8 @@ public class AdvancedTable extends Composite {
 		buttonNextPage = new Button();
 		navigationPanel.add(buttonNextPage);
 		buttonNextPage.setSize("20", "23");
-		navigationPanel.setCellVerticalAlignment(buttonNextPage, HasVerticalAlignment.ALIGN_MIDDLE);
+		navigationPanel.setCellVerticalAlignment(buttonNextPage, 
+			HasVerticalAlignment.ALIGN_MIDDLE);
 		buttonNextPage.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonNextPageClicked();
@@ -148,7 +163,8 @@ public class AdvancedTable extends Composite {
 		buttonLastPage = new Button();
 		navigationPanel.add(buttonLastPage);
 		buttonLastPage.setSize("25", "23");
-		navigationPanel.setCellVerticalAlignment(buttonLastPage, HasVerticalAlignment.ALIGN_MIDDLE);
+		navigationPanel.setCellVerticalAlignment(buttonLastPage,
+			HasVerticalAlignment.ALIGN_MIDDLE);
 		buttonLastPage.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonLastPageClicked();
@@ -158,6 +174,15 @@ public class AdvancedTable extends Composite {
 			buttonLastPage, HasHorizontalAlignment.ALIGN_RIGHT);
 		navigationPanel.setCellWidth(buttonLastPage, "28");
 		buttonLastPage.setText(">>");
+		
+		// Add event handler to perform sorting on header column click
+		// and row selection on row click
+		this.grid.addTableListener(new TableListener() {
+			public void onCellClicked(SourcesTableEvents sender, 
+					int row, int column) {
+				AdvancedTable.this.cellClicked(row, column);
+			}
+		});
 	}
 	
 	public int getPageSize() {
@@ -171,8 +196,33 @@ public class AdvancedTable extends Composite {
 		this.pageSize = pageSize;
 	}
 
+	
+	/**
+	 * @return the current table data source (TableModelService).
+	 */
 	public TableModelServiceAsync getTableModelService() {
 		return this.tableModelService;
+	}
+	
+	/**
+	 * @return if the first table column is visible or hidden.
+	 */
+	public boolean isFirstColumnVisible() {
+		return firstColumnVisible;
+	}
+
+	/**
+	 * Shows or hides the first table column. The value in the first column
+	 * is considered a row identifier (primary key). It can be visible or
+	 * hidden from the user.
+	 */
+	public void setFirstColumnVisible(boolean firstColumnVisible) {
+		if (this.tableModelService != null) {
+			throw new IllegalStateException(
+				"Can not modify the FirstColumnVisible property " +
+				"after the TableModelService is assigned!");
+		}
+		this.firstColumnVisible = firstColumnVisible;
 	}
 
 	/**
@@ -194,19 +244,25 @@ public class AdvancedTable extends Composite {
 		});
 	}
 	
+	public void addRowSelectionListener(RowSelectionListener listener) {
+	    if (this.rowSelectionListeners == null) {
+	    	this.rowSelectionListeners = new ArrayList();
+	    }
+	    this.rowSelectionListeners.add(listener);
+	}
+	
 	/**
 	 * Updates and redraws the table columns based on the table data
 	 * coming from the server.
 	 */
-	public void updateTableColumns(final AsyncCallback completedCallback) {
+	private void updateTableColumns(final AsyncCallback completedCallback) {
 		this.tableModelService.getColumns(new AsyncCallback() {
 			public void onFailure(Throwable caught) {
 				completedCallback.onFailure(caught);
 			}
 			public void onSuccess(Object result) {
-				AdvancedTable.this.columns = (TableColumn[]) result;
-				AdvancedTable.this.sortColumnName = null;
-				redrawTableColumns();
+				TableColumn[] columns = (TableColumn[]) result;
+				AdvancedTable.this.updateTableColumns(columns);
 				completedCallback.onSuccess(result);
 			}
 		});
@@ -269,17 +325,28 @@ public class AdvancedTable extends Composite {
 		
 		// Fill the column titles
 		redrawColumnTitles();
-		
-		// Add event handler to perform sorting on header column click 
-		this.grid.addTableListener(new TableListener() {
-			public void onCellClicked(SourcesTableEvents sender, 
-					int row, int cell) {
-				if (row == 0) {
-					String column = AdvancedTable.this.columns[cell].getName();
-					AdvancedTable.this.applySorting(column);
-				}
+	}
+
+	private void updateTableColumns(TableColumn[] newColumns) {
+		// Copy all visible columns to this.columns (remove hidden columns)
+		if (this.firstColumnVisible) {
+			this.columns = newColumns;
+		}
+		else {
+			this.columns = new TableColumn[newColumns.length-1];
+			for (int i=0; i<this.columns.length; i++) {
+				this.columns[i] = newColumns[i+1];
 			}
-		});
+		}
+
+		// No sorting is performed by default
+		this.sortColumnName = null;
+		
+		// No row is selected by default
+		this.selectedRowIndex = NO_ROW_SELECTED;
+		
+		// Now display the new table columns are resize the table
+		redrawTableColumns();
 	}
 
 	private void applySorting(String column) {
@@ -299,8 +366,7 @@ public class AdvancedTable extends Composite {
 				if (this.sortOrder) {
 					title = title + SORT_ASC_SYMBOL;
 				}
-				else
-				{
+				else {
 					title = title + SORT_DESC_SYMBOL;
 				}
 			}
@@ -325,9 +391,12 @@ public class AdvancedTable extends Composite {
 	private void updateRows() {
 		showStatus("Loading...", STATUS_WAIT);
 		
-		// Check for empty table - it is special case
+		// Check for empty table - it is a special case
 		if (this.totalRowsCount == 0) {
+			currentPageRowsCount = 0;
 			drawEmptyTable();
+			this.selectedRowIndex = NO_ROW_SELECTED;
+			redrawSelectedRow();
 			return;
 		}
 		
@@ -387,11 +456,19 @@ public class AdvancedTable extends Composite {
 	}
 	
 	private void redrawRows() {
+		int startColumn = 0;
+		if (! this.firstColumnVisible) {
+			startColumn = 1;
+		}
+		
 		for (int row=0; row<this.pageSize; row++) {
 			if (row < this.currentPageRowsCount) {
 				// Fill data row in the table
 				for (int col=0; col<this.columns.length; col++) {
-					String cellValue = this.pageRows[row][col];
+					String cellValue = this.pageRows[row][col+startColumn];
+					if (cellValue == null) {
+						cellValue = NULL_DISPLAY_VALUE;
+					}
 					grid.setText(row+1, col, cellValue);
 				}
 			} else {
@@ -401,10 +478,29 @@ public class AdvancedTable extends Composite {
 				}
 			}
 		}
+		
+		this.selectedRowIndex = NO_ROW_SELECTED;
+		redrawSelectedRow();
 
 		redrawNavigationArea();		
 	}
 	
+	/**
+	 * Change the CSS styles of all rows. The currently selected row
+	 * gets different CSS style.
+	 */
+	private void redrawSelectedRow() {
+		RowFormatter gridRowFormatter = grid.getRowFormatter();
+		for (int row=1; row<=this.pageSize; row++) {
+			if (row == this.selectedRowIndex) {
+				gridRowFormatter.setStyleName(row, SELECTED_ROW_STYLE);
+			}
+			else {
+				gridRowFormatter.setStyleName(row, DEFAULT_ROW_STYLE);
+			}
+		}
+	}
+
 	private void drawEmptyTable() {
 		for (int row=0; row<this.pageSize; row++) {
 			for (int col=0; col<this.columns.length; col++) {
@@ -413,6 +509,33 @@ public class AdvancedTable extends Composite {
 		}
 		redrawNavigationArea();
 		showStatus("No data found.", STATUS_INFO);		
+	}
+
+	private void cellClicked(int row, int column) {
+		if (row == 0) {
+			String columnName = this.columns[column].getName();
+			this.applySorting(columnName);
+		} else {
+			if (row <= this.currentPageRowsCount) {
+				selectRow(row);
+			}
+		}
+		redrawSelectedRow();
+	}
+
+	private void selectRow(int rowIndex) {
+		// Assign selected row index
+		this.selectedRowIndex = rowIndex;
+		
+		// Fire onRowSelected() event for all selection listeners
+		String rowId = getSelectedRowId(); 
+		if (this.rowSelectionListeners != null) {
+			for (int i=0; i<this.rowSelectionListeners.size(); i++) {
+				RowSelectionListener listener = 
+					(RowSelectionListener) this.rowSelectionListeners.get(i);
+				listener.onRowSelected(this, rowId);
+			}
+		}
 	}
 
 	private void buttonFirstPageClicked() {
@@ -458,6 +581,22 @@ public class AdvancedTable extends Composite {
 		else {
 			throw new IllegalArgumentException("Illegal statusLevel.");
 		}		
+	}
+	
+	/**
+	 * @return the row identifier (primary key) of the currently selected
+	 * row. This is the value of the first column in the table. If no row
+	 * is currently selected, the returned value is null.
+	 */
+	public String getSelectedRowId() {
+		if (this.selectedRowIndex == NO_ROW_SELECTED) {
+			return null;
+		}
+		else {
+			String selectedRowId =
+				this.pageRows[this.selectedRowIndex-1][0];
+			return selectedRowId;
+		}
 	}
 
 }
