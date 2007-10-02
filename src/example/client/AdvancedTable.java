@@ -50,6 +50,8 @@ public class AdvancedTable extends Composite {
 	private static final String SELECTED_ROW_STYLE = "advancedTableSelectedRow";
 	private static final String NULL_DISPLAY_VALUE = "&nbsp;";
 
+	private ScrollPanel scrollPanelGrid;
+	private HorizontalPanel navigationPanel;
 	private final Grid grid;
 	private final Label statusLabel;
 	private final Button buttonFirstPage;
@@ -80,9 +82,8 @@ public class AdvancedTable extends Composite {
 		initWidget(contentDockPanel);
 		contentDockPanel.setSize("100%", "100%");
 
-		final ScrollPanel scrollPanelGrid = new ScrollPanel();
+		scrollPanelGrid = new ScrollPanel();
 		contentDockPanel.add(scrollPanelGrid, DockPanel.CENTER);
-		scrollPanelGrid.setSize("100%", "100%");
 		contentDockPanel.setCellWidth(scrollPanelGrid, "100%");
 		contentDockPanel.setCellHeight(scrollPanelGrid, "100%");
 		
@@ -110,19 +111,20 @@ public class AdvancedTable extends Composite {
 			}
 		});
 		
-		final HorizontalPanel navigationPanel = new HorizontalPanel();
+		navigationPanel = new HorizontalPanel();
 		contentDockPanel.add(navigationPanel, DockPanel.SOUTH);
-		contentDockPanel.setCellHeight(navigationPanel, "23px");
+		navigationPanel.setSize("100%", "26px");
+		contentDockPanel.setCellHeight(navigationPanel, "26px");
 		contentDockPanel.setCellWidth(navigationPanel, "100%");
 		contentDockPanel.setCellVerticalAlignment(navigationPanel,
 			HasVerticalAlignment.ALIGN_BOTTOM);
-		navigationPanel.setSize("100%", "23px");
 
 		final Button buttonRefresh = new Button();
 		navigationPanel.add(buttonRefresh);
+		navigationPanel.setCellHeight(buttonRefresh, "23px");
 		buttonRefresh.setSize("70", "23");
 		navigationPanel.setCellVerticalAlignment(buttonRefresh, 
-			HasVerticalAlignment.ALIGN_MIDDLE);
+			HasVerticalAlignment.ALIGN_BOTTOM);
 		buttonRefresh.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonRefreshClicked();
@@ -132,17 +134,20 @@ public class AdvancedTable extends Composite {
 		
 		statusLabel = new Label();
 		navigationPanel.add(statusLabel);
+		statusLabel.setHeight("20px");
+		navigationPanel.setCellHeight(statusLabel, "23px");
 		navigationPanel.setCellHorizontalAlignment(
 			statusLabel, HasHorizontalAlignment.ALIGN_RIGHT);
 		navigationPanel.setCellVerticalAlignment(
-			statusLabel, HasVerticalAlignment.ALIGN_MIDDLE);
+			statusLabel, HasVerticalAlignment.ALIGN_BOTTOM);
 		showStatus("Table model service not available.", STATUS_ERROR);
 		
 		buttonFirstPage = new Button();
 		navigationPanel.add(buttonFirstPage);
+		navigationPanel.setCellHeight(buttonFirstPage, "23px");
 		buttonFirstPage.setSize("25", "23");
 		navigationPanel.setCellVerticalAlignment(buttonFirstPage, 
-			HasVerticalAlignment.ALIGN_MIDDLE);
+			HasVerticalAlignment.ALIGN_BOTTOM);
 		buttonFirstPage.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonFirstPageClicked();
@@ -150,14 +155,15 @@ public class AdvancedTable extends Composite {
 		});
 		navigationPanel.setCellHorizontalAlignment(
 			buttonFirstPage, HasHorizontalAlignment.ALIGN_RIGHT);
-		navigationPanel.setCellWidth(buttonFirstPage, "35");
+		navigationPanel.setCellWidth(buttonFirstPage, "30px");
 		buttonFirstPage.setText("<<");
 		
 		buttonPrevPage = new Button();
 		navigationPanel.add(buttonPrevPage);
+		navigationPanel.setCellHeight(buttonPrevPage, "23px");
 		buttonPrevPage.setSize("20", "23");
 		navigationPanel.setCellVerticalAlignment(buttonPrevPage, 
-			HasVerticalAlignment.ALIGN_MIDDLE);
+			HasVerticalAlignment.ALIGN_BOTTOM);
 		buttonPrevPage.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonPrevPageClicked();
@@ -165,14 +171,15 @@ public class AdvancedTable extends Composite {
 		});
 		navigationPanel.setCellHorizontalAlignment(
 			buttonPrevPage, HasHorizontalAlignment.ALIGN_RIGHT);
-		navigationPanel.setCellWidth(buttonPrevPage, "23");
+		navigationPanel.setCellWidth(buttonPrevPage, "23px");
 		buttonPrevPage.setText("<");
 		
 		buttonNextPage = new Button();
 		navigationPanel.add(buttonNextPage);
+		navigationPanel.setCellHeight(buttonNextPage, "23px");
 		buttonNextPage.setSize("20", "23");
 		navigationPanel.setCellVerticalAlignment(buttonNextPage, 
-			HasVerticalAlignment.ALIGN_MIDDLE);
+			HasVerticalAlignment.ALIGN_BOTTOM);
 		buttonNextPage.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonNextPageClicked();
@@ -180,14 +187,15 @@ public class AdvancedTable extends Composite {
 		});
 		navigationPanel.setCellHorizontalAlignment(
 			buttonNextPage, HasHorizontalAlignment.ALIGN_RIGHT);
-		navigationPanel.setCellWidth(buttonNextPage, "23");
+		navigationPanel.setCellWidth(buttonNextPage, "23px");
 		buttonNextPage.setText(">");
 
 		buttonLastPage = new Button();
 		navigationPanel.add(buttonLastPage);
+		navigationPanel.setCellHeight(buttonLastPage, "23px");
 		buttonLastPage.setSize("25", "23");
 		navigationPanel.setCellVerticalAlignment(buttonLastPage,
-			HasVerticalAlignment.ALIGN_MIDDLE);
+			HasVerticalAlignment.ALIGN_BOTTOM);
 		buttonLastPage.addClickListener(new ClickListener() {
 			public void onClick(Widget sender) {
 				AdvancedTable.this.buttonLastPageClicked();
@@ -195,7 +203,7 @@ public class AdvancedTable extends Composite {
 		});
 		navigationPanel.setCellHorizontalAlignment(
 			buttonLastPage, HasHorizontalAlignment.ALIGN_RIGHT);
-		navigationPanel.setCellWidth(buttonLastPage, "28");
+		navigationPanel.setCellWidth(buttonLastPage, "28px");
 		buttonLastPage.setText(">>");
 	}
 	
@@ -491,7 +499,7 @@ public class AdvancedTable extends Composite {
 			} else {
 				// Fill empty row in the table
 				for (int col=0; col<this.columns.length; col++) {
-					grid.setHTML(row+1, col, "&nbsp;");
+					grid.setHTML(row+1, col, NULL_DISPLAY_VALUE);
 				}
 			}
 		}
@@ -499,7 +507,9 @@ public class AdvancedTable extends Composite {
 		this.selectedRowIndex = NO_ROW_SELECTED;
 		redrawSelectedRow();
 
-		redrawNavigationArea();		
+		redrawNavigationArea();
+		
+		fixGridSize();
 	}
 	
 	/**
@@ -521,11 +531,12 @@ public class AdvancedTable extends Composite {
 	private void drawEmptyTable() {
 		for (int row=0; row<this.pageSize; row++) {
 			for (int col=0; col<this.columns.length; col++) {
-				grid.setText(row+1, col, " ");
+				grid.setHTML(row+1, col, NULL_DISPLAY_VALUE);
 			}
 		}
 		redrawNavigationArea();
-		showStatus("No data found.", STATUS_INFO);		
+		showStatus("No data found.", STATUS_INFO);
+		fixGridSize();
 	}
 
 	private void cellClicked(int row, int column) {
@@ -615,5 +626,15 @@ public class AdvancedTable extends Composite {
 			return selectedRowId;
 		}
 	}
+	
+	private void fixGridSize() {
+		int realWidth = this.getOffsetWidth();
+		scrollPanelGrid.setWidth("" + realWidth + "px");
 
+		int realHeight = this.getOffsetHeight();
+		int navigationHeight = navigationPanel.getOffsetHeight();
+		int tableHeight = realHeight - navigationHeight;
+		scrollPanelGrid.setHeight("" + tableHeight + "px");
+	}
+	
 }
