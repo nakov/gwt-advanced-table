@@ -39,7 +39,9 @@ import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 
 public class AdvancedTable extends Composite {
 	
-	private static final int DEFAULT_PAGE_SIZE = 5;
+	private static final int DEFAULT_PAGE_SIZE = 6;
+	private static final String DEFAULT_TABLE_WIDTH = "430px";
+	private static final String DEFAULT_TABLE_HEIGHT = "210px";
 	private static final int STATUS_INFO = 1001;
 	private static final int STATUS_ERROR = 1002;
 	private static final int STATUS_WAIT = 1003;
@@ -81,21 +83,21 @@ public class AdvancedTable extends Composite {
 		final DockPanel contentDockPanel = new DockPanel();
 		initWidget(contentDockPanel);
 		contentDockPanel.setSize("100%", "100%");
-
+		this.setSize(DEFAULT_TABLE_WIDTH, DEFAULT_TABLE_HEIGHT);
+		
 		scrollPanelGrid = new ScrollPanel();
 		contentDockPanel.add(scrollPanelGrid, DockPanel.CENTER);
 		contentDockPanel.setCellWidth(scrollPanelGrid, "100%");
 		contentDockPanel.setCellHeight(scrollPanelGrid, "100%");
 		
 		grid = new Grid();
-		scrollPanelGrid.setWidget(grid);
 		grid.setSize("100%", "100%");
 		grid.setCellSpacing(0);
 		grid.setBorderWidth(1);
+		scrollPanelGrid.setWidget(grid);
 		
 		// Display a preview of the table (when not in browser mode)
 		if (! GWT.isScript()) {
-			// Display a preview of the table (when not in browser mode)
 			grid.resize(DEFAULT_PAGE_SIZE+1, 3);
 			grid.setText(0, 0, "Column 1");
 			grid.setText(0, 1, "Column 2");
@@ -216,8 +218,11 @@ public class AdvancedTable extends Composite {
 	 */
 	public void setPageSize(int pageSize) {
 		this.pageSize = pageSize;
+		// Display a preview of the table (when not in browser mode)
+		if (! GWT.isScript()) {
+			grid.resize(pageSize+1, 3);
+		}		
 	}
-
 	
 	/**
 	 * @return the current table data source (TableModelService).
