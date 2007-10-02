@@ -38,16 +38,18 @@ public class GWTAdvancedTableExample implements EntryPoint {
 			}
 		});
 		
-		rootPanel.add(table, 11, 65);
-		table.setSize("402px", "170px");
+		rootPanel.add(table, 10, 65);
+		table.setSize("402px", "175px");
+		table.setPageSize(5);
 
 		final HorizontalPanel horizontalPanel = new HorizontalPanel();
 		rootPanel.add(horizontalPanel, 10, 34);
-		horizontalPanel.setSize("403px", "23px");
+		horizontalPanel.setSize("402px", "23px");
 
 		final Label labelFilter = new Label("Filter:");
 		horizontalPanel.add(labelFilter);
-		horizontalPanel.setCellVerticalAlignment(labelFilter, HasVerticalAlignment.ALIGN_MIDDLE);
+		horizontalPanel.setCellVerticalAlignment(
+			labelFilter, HasVerticalAlignment.ALIGN_MIDDLE);
 		labelFilter.setWidth("50");
 
 		final TextBox textBoxFilter = new TextBox();
@@ -68,7 +70,8 @@ public class GWTAdvancedTableExample implements EntryPoint {
 		});
 		buttonApplyFilter.setWidth("100");
 		horizontalPanel.setCellWidth(buttonApplyFilter, "100");
-		horizontalPanel.setCellHorizontalAlignment(buttonApplyFilter, HasHorizontalAlignment.ALIGN_RIGHT);
+		horizontalPanel.setCellHorizontalAlignment(
+			buttonApplyFilter, HasHorizontalAlignment.ALIGN_RIGHT);
 		buttonApplyFilter.setText("Apply Filter");
 
 		final Button clearFilterButton = new Button();
@@ -94,7 +97,7 @@ public class GWTAdvancedTableExample implements EntryPoint {
 			HasHorizontalAlignment.ALIGN_RIGHT);
 
 		this.labelMessages = new Label("Event messages will appear here.");
-		rootPanel.add(this.labelMessages, 11, 243);
+		rootPanel.add(this.labelMessages, 10, 245);
 		labelMessages.setSize("402px", "19px");
 	}
 
