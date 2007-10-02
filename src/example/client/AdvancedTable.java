@@ -25,12 +25,13 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SourcesTableEvents;
 import com.google.gwt.user.client.ui.TableListener;
 import com.google.gwt.user.client.ui.Widget;
@@ -47,7 +48,7 @@ public class AdvancedTable extends Composite {
 	private static final int NO_ROW_SELECTED = -1;
 	private static final String DEFAULT_ROW_STYLE = "advancedTableRow";
 	private static final String SELECTED_ROW_STYLE = "advancedTableSelectedRow";
-	private static final String NULL_DISPLAY_VALUE = " ";
+	private static final String NULL_DISPLAY_VALUE = "&nbsp;";
 
 	private final Grid grid;
 	private final Label statusLabel;
@@ -75,13 +76,23 @@ public class AdvancedTable extends Composite {
 	public AdvancedTable() {
 		super();
 		
-		final FlowPanel contentFlowPanel = new FlowPanel();
-		initWidget(contentFlowPanel);
+		final DockPanel contentDockPanel = new DockPanel();
+		initWidget(contentDockPanel);
+		contentDockPanel.setSize("100%", "100%");
+
+		final ScrollPanel scrollPanelGrid = new ScrollPanel();
+		contentDockPanel.add(scrollPanelGrid, DockPanel.CENTER);
+		scrollPanelGrid.setSize("100%", "100%");
+		contentDockPanel.setCellWidth(scrollPanelGrid, "100%");
+		contentDockPanel.setCellHeight(scrollPanelGrid, "100%");
 		
 		grid = new Grid();
-		grid.setWidth("100%");
+		scrollPanelGrid.setWidget(grid);
+		grid.setSize("100%", "100%");
 		grid.setCellSpacing(0);
 		grid.setBorderWidth(1);
+		
+		// Display a preview of the table (when not in browser mode)
 		if (! GWT.isScript()) {
 			// Display a preview of the table (when not in browser mode)
 			grid.resize(DEFAULT_PAGE_SIZE+1, 3);
@@ -89,11 +100,23 @@ public class AdvancedTable extends Composite {
 			grid.setText(0, 1, "Column 2");
 			grid.setText(0, 2, "Column 3");
 		}
-		contentFlowPanel.add(grid);
+		
+		// Add event handler to perform sorting on header column click
+		// and row selection on row click
+		this.grid.addTableListener(new TableListener() {
+			public void onCellClicked(SourcesTableEvents sender, 
+					int row, int column) {
+				AdvancedTable.this.cellClicked(row, column);
+			}
+		});
 		
 		final HorizontalPanel navigationPanel = new HorizontalPanel();
-		contentFlowPanel.add(navigationPanel);
-		navigationPanel.setWidth("100%");
+		contentDockPanel.add(navigationPanel, DockPanel.SOUTH);
+		contentDockPanel.setCellHeight(navigationPanel, "23px");
+		contentDockPanel.setCellWidth(navigationPanel, "100%");
+		contentDockPanel.setCellVerticalAlignment(navigationPanel,
+			HasVerticalAlignment.ALIGN_BOTTOM);
+		navigationPanel.setSize("100%", "23px");
 
 		final Button buttonRefresh = new Button();
 		navigationPanel.add(buttonRefresh);
@@ -174,15 +197,6 @@ public class AdvancedTable extends Composite {
 			buttonLastPage, HasHorizontalAlignment.ALIGN_RIGHT);
 		navigationPanel.setCellWidth(buttonLastPage, "28");
 		buttonLastPage.setText(">>");
-		
-		// Add event handler to perform sorting on header column click
-		// and row selection on row click
-		this.grid.addTableListener(new TableListener() {
-			public void onCellClicked(SourcesTableEvents sender, 
-					int row, int column) {
-				AdvancedTable.this.cellClicked(row, column);
-			}
-		});
 	}
 	
 	public int getPageSize() {
@@ -466,10 +480,13 @@ public class AdvancedTable extends Composite {
 				// Fill data row in the table
 				for (int col=0; col<this.columns.length; col++) {
 					String cellValue = this.pageRows[row][col+startColumn];
-					if (cellValue == null) {
-						cellValue = NULL_DISPLAY_VALUE;
+					if (cellValue != null) {
+						grid.setText(row+1, col, cellValue);
+					} 
+					else {
+						grid.setHTML(row+1, col, NULL_DISPLAY_VALUE);
 					}
-					grid.setText(row+1, col, cellValue);
+					
 				}
 			} else {
 				// Fill empty row in the table
