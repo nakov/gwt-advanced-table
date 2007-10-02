@@ -39,7 +39,7 @@ public class GWTAdvancedTableExample implements EntryPoint {
 		});
 		
 		rootPanel.add(table, 11, 65);
-		table.setSize("402px", "127px");
+		table.setSize("402px", "170px");
 
 		final HorizontalPanel horizontalPanel = new HorizontalPanel();
 		rootPanel.add(horizontalPanel, 10, 34);
