@@ -634,12 +634,15 @@ public class AdvancedTable extends Composite {
 	
 	private void fixGridSize() {
 		int realWidth = this.getOffsetWidth();
-		scrollPanelGrid.setWidth("" + realWidth + "px");
-
-		int realHeight = this.getOffsetHeight();
-		int navigationHeight = navigationPanel.getOffsetHeight();
-		int tableHeight = realHeight - navigationHeight;
-		scrollPanelGrid.setHeight("" + tableHeight + "px");
+		if (realWidth != 0) {
+			// The table is fully loaded and we can resize it
+			scrollPanelGrid.setWidth("" + realWidth + "px");
+	
+			int realHeight = this.getOffsetHeight();
+			int navigationHeight = navigationPanel.getOffsetHeight();
+			int tableHeight = realHeight - navigationHeight;
+			scrollPanelGrid.setHeight("" + tableHeight + "px");
+		}
 	}
 	
 }
