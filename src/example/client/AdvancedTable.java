@@ -21,6 +21,8 @@ package example.client;
 import java.util.ArrayList;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -42,6 +44,7 @@ public class AdvancedTable extends Composite {
 	private static final int DEFAULT_PAGE_SIZE = 6;
 	private static final String DEFAULT_TABLE_WIDTH = "430px";
 	private static final String DEFAULT_TABLE_HEIGHT = "210px";
+	private static final int NAVIGATION_PANEL_HEIGHT = 26;
 	private static final int STATUS_INFO = 1001;
 	private static final int STATUS_ERROR = 1002;
 	private static final int STATUS_WAIT = 1003;
@@ -86,15 +89,16 @@ public class AdvancedTable extends Composite {
 		this.setSize(DEFAULT_TABLE_WIDTH, DEFAULT_TABLE_HEIGHT);
 		
 		scrollPanelGrid = new ScrollPanel();
+		scrollPanelGrid.setSize("100%", "100%");
 		contentDockPanel.add(scrollPanelGrid, DockPanel.CENTER);
 		contentDockPanel.setCellWidth(scrollPanelGrid, "100%");
 		contentDockPanel.setCellHeight(scrollPanelGrid, "100%");
 		
 		grid = new Grid();
-		grid.setSize("100%", "100%");
 		grid.setCellSpacing(0);
 		grid.setBorderWidth(1);
-		scrollPanelGrid.setWidget(grid);
+		scrollPanelGrid.add(grid);
+		grid.setSize("100%", "100%");
 		
 		// Display a preview of the table (when not in browser mode)
 		if (! GWT.isScript()) {
@@ -112,7 +116,7 @@ public class AdvancedTable extends Composite {
 				AdvancedTable.this.cellClicked(row, column);
 			}
 		});
-		
+
 		navigationPanel = new HorizontalPanel();
 		contentDockPanel.add(navigationPanel, DockPanel.SOUTH);
 		navigationPanel.setSize("100%", "26px");
@@ -633,16 +637,29 @@ public class AdvancedTable extends Composite {
 	}
 	
 	private void fixGridSize() {
-		int realWidth = this.getOffsetWidth();
-		if (realWidth != 0) {
-			// The table is fully loaded and we can resize it
-			scrollPanelGrid.setWidth("" + realWidth + "px");
-	
-			int realHeight = this.getOffsetHeight();
-			int navigationHeight = navigationPanel.getOffsetHeight();
-			int tableHeight = realHeight - navigationHeight;
-			scrollPanelGrid.setHeight("" + tableHeight + "px");
+		// Fix scroll panel width
+		String originalWidth =
+			DOM.getStyleAttribute(this.getElement(), "width");
+		scrollPanelGrid.setWidth(originalWidth);
+
+		// Fix scroll panel height
+		String originalHeightStr =
+			DOM.getStyleAttribute(this.getElement(), "height");
+		if (originalHeightStr.endsWith("%")) {
+			// Height is given in percentages --> use the height from the parent
+			Element parentContainer = DOM.getParent(this.getElement());
+			originalHeightStr = DOM.getElementProperty(parentContainer, "offsetHeight");
+			// Fix the table height: convert percentages to pixels
+			this.setHeight("" + originalHeightStr + "px");
 		}
+		else if (originalHeightStr.endsWith("px")) {
+			// Height is given in pixels --> remove the "px" at the end
+			originalHeightStr = originalHeightStr.substring(
+				0, originalHeightStr.length()-2);
+		}
+		int originalHeight = Integer.parseInt(originalHeightStr);
+		int newHeight = originalHeight - NAVIGATION_PANEL_HEIGHT;
+		scrollPanelGrid.setHeight("" + newHeight + "px");
 	}
 	
 }
