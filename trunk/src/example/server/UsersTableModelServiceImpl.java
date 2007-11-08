@@ -47,6 +47,8 @@ public class UsersTableModelServiceImpl extends RemoteServiceServlet implements
 		new User(15, null, "Kirov"),
 		new User(16, "Karabatama-Tafataga-Taratugarugatugata", 
 			"Kushata-Ratafata-Katamalata"),
+		new User(17, "Looooooooooooooooooooooooooooooooooooooooong", 
+			"Loooooooooooooooooooooooooooooooooooooooooooooooooong"),
 	};
 
 	private List<User> filteredUsers;

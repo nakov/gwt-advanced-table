@@ -10,6 +10,7 @@
 package example.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import example.client.AdvancedTable;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
