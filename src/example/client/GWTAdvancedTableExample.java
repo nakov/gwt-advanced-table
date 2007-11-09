@@ -9,8 +9,12 @@
 
 package example.client;
 
+import java.util.Set;
+
 import com.google.gwt.core.client.EntryPoint;
 import example.client.AdvancedTable;
+
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -31,6 +35,7 @@ public class GWTAdvancedTableExample implements EntryPoint {
 		final AdvancedTable table = new AdvancedTable();
 		TableModelServiceAsync usersTableService =
 			ServiceUtils.getTableModelServiceAsync();
+		table.setAllowRowMark(true);
 		//table.setFirstColumnVisible(false);
 		table.setTableModelService(usersTableService);
 		table.addRowSelectionListener(new RowSelectionListener() {
@@ -100,6 +105,37 @@ public class GWTAdvancedTableExample implements EntryPoint {
 		this.labelMessages = new Label("Event messages will appear here.");
 		rootPanel.add(this.labelMessages, 10, 245);
 		labelMessages.setSize("402px", "19px");
+
+		final Button buttonMarkAll = new Button();
+		rootPanel.add(buttonMarkAll, 10, 269);
+		buttonMarkAll.addClickListener(new ClickListener() {
+			public void onClick(Widget sender) {
+				table.markAllRows();
+			}
+		});
+		buttonMarkAll.setWidth("128px");
+		buttonMarkAll.setText("Mark All");
+
+		final Button buttonMarkNothing = new Button();
+		rootPanel.add(buttonMarkNothing, 143, 269);
+		buttonMarkNothing.addClickListener(new ClickListener() {
+			public void onClick(Widget sender) {
+				table.clearMarkedRows();
+			}
+		});
+		buttonMarkNothing.setSize("136px", "24px");
+		buttonMarkNothing.setText("Mark Nothing");
+
+		final Button buttonShowMarked = new Button();
+		rootPanel.add(buttonShowMarked, 284, 269);
+		buttonShowMarked.addClickListener(new ClickListener() {
+			public void onClick(Widget sender) {
+				Set markedRows = table.getMarkedRows();
+				Window.alert("Marked rows:" + markedRows.toString());				
+			}
+		});
+		buttonShowMarked.setSize("128px", "24px");
+		buttonShowMarked.setText("Show Marked");
 	}
 
 }

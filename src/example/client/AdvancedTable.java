@@ -19,12 +19,15 @@
 package example.client;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -50,6 +53,7 @@ public class AdvancedTable extends Composite {
 	private static final int STATUS_WAIT = 1003;
 	private static final String SORT_ASC_SYMBOL = " \u25b2";
 	private static final String SORT_DESC_SYMBOL = " \u25bc";
+	private static final String MARK_COLUMN_TITLE = "\u00bb";
 	private static final int NO_ROW_SELECTED = -1;
 	private static final String DEFAULT_ROW_STYLE = "advancedTableRow";
 	private static final String SELECTED_ROW_STYLE = "advancedTableSelectedRow";
@@ -68,6 +72,7 @@ public class AdvancedTable extends Composite {
 	
 	private int pageSize = DEFAULT_PAGE_SIZE;
 	private boolean firstColumnVisible = true;
+	private boolean allowRowMark = false;
 	private TableModelServiceAsync tableModelService;
 	private TableColumn[] columns;
 	private DataFilter[] filters;
@@ -79,6 +84,7 @@ public class AdvancedTable extends Composite {
 	private String sortColumnName;
 	private boolean sortOrder;
 	private int selectedRowIndex;
+	private Set markedRows = new HashSet();
 	
 	public AdvancedTable() {
 		super();
@@ -257,6 +263,25 @@ public class AdvancedTable extends Composite {
 	}
 
 	/**
+	 * @return if the table allows row marking.
+	 */
+	public boolean isAllowRowMark() {
+		return this.allowRowMark;
+	}
+
+	/**
+	 * Shows or hides the "row mark" check box in front of each row.
+	 */
+	public void setAllowRowMark(boolean allowRowMark) {
+		if (this.tableModelService != null) {
+			throw new IllegalStateException(
+				"Can not modify the AllowedRowMark property " +
+				"after the TableModelService is assigned!");
+		}
+		this.allowRowMark = allowRowMark;
+	}
+	
+	/**
 	 * Sets a table model for this table, updates its columns and rows
 	 * based on the information coming from the server and redraws the
 	 * table contents (column titles and data rows).
@@ -299,6 +324,46 @@ public class AdvancedTable extends Composite {
 		});
 	}
 	
+	private void updateTableColumns(TableColumn[] newColumns) {
+		// Copy all visible columns to this.columns (remove hidden
+		// columns and show additional "mark" column if available)
+		if (this.firstColumnVisible) {
+			if (this.allowRowMark) {
+				this.columns = new TableColumn[newColumns.length+1];
+				this.columns[0] = new TableColumn("", MARK_COLUMN_TITLE);
+				for (int i=0; i<newColumns.length; i++) {
+					this.columns[i+1] = newColumns[i];
+				}
+			} else {
+				this.columns = newColumns;
+			}
+		}
+		else {
+			if (this.allowRowMark) {
+				this.columns = newColumns;
+				this.columns[0] = new TableColumn("", MARK_COLUMN_TITLE);
+			}
+			else {
+				this.columns = new TableColumn[newColumns.length-1];
+				for (int i=0; i<this.columns.length; i++) {
+					this.columns[i] = newColumns[i+1];
+				}
+			}
+		}
+
+		// No sorting is performed by default
+		this.sortColumnName = null;
+		
+		// No row is selected by default
+		this.selectedRowIndex = NO_ROW_SELECTED;
+		
+		// Clear the set or "marked" rows
+		this.markedRows.clear();
+		
+		// Now display the new table columns are resize the table
+		redrawTableColumns();
+	}
+
 	/**
 	 * Updates and redraws the table data rows of the currently
 	 * selected page based on the information from the table model
@@ -358,28 +423,6 @@ public class AdvancedTable extends Composite {
 		redrawColumnTitles();
 	}
 
-	private void updateTableColumns(TableColumn[] newColumns) {
-		// Copy all visible columns to this.columns (remove hidden columns)
-		if (this.firstColumnVisible) {
-			this.columns = newColumns;
-		}
-		else {
-			this.columns = new TableColumn[newColumns.length-1];
-			for (int i=0; i<this.columns.length; i++) {
-				this.columns[i] = newColumns[i+1];
-			}
-		}
-
-		// No sorting is performed by default
-		this.sortColumnName = null;
-		
-		// No row is selected by default
-		this.selectedRowIndex = NO_ROW_SELECTED;
-		
-		// Now display the new table columns are resize the table
-		redrawTableColumns();
-	}
-
 	private void applySorting(String column) {
 		if (column.equals(this.sortColumnName)) {
 			applySorting(this.sortColumnName, ! this.sortOrder);
@@ -403,6 +446,8 @@ public class AdvancedTable extends Composite {
 			}
 			grid.setText(0, col, title);
 		}
+		grid.getCellFormatter().setHorizontalAlignment(
+				0, 0, HasHorizontalAlignment.ALIGN_CENTER);
 	}
 	
 	private void updateRowsCount(final AsyncCallback completedCallback) {
@@ -485,32 +530,41 @@ public class AdvancedTable extends Composite {
 		this.buttonNextPage.setEnabled(enabledNextLastPage);
 		this.buttonLastPage.setEnabled(enabledNextLastPage);		
 	}
-	
+
 	private void redrawRows() {
-		int startColumn = 0;
+		int startTableColumn = 0;
+		if (this.allowRowMark) {
+			startTableColumn = 1;
+		}
+		
+		int startDataColumn = 0;
 		if (! this.firstColumnVisible) {
-			startColumn = 1;
+			startDataColumn = 1;
 		}
 		
 		for (int row=0; row<this.pageSize; row++) {
 			if (row < this.currentPageRowsCount) {
 				// Fill data row in the table
-				for (int col=0; col<this.columns.length; col++) {
-					String cellValue = this.pageRows[row][col+startColumn];
+				for (int col=startTableColumn; col<this.columns.length; col++) {
+					String cellValue = 
+						this.pageRows[row][col - startTableColumn + startDataColumn];
 					if (cellValue != null) {
 						grid.setText(row+1, col, cellValue);
 					} 
 					else {
 						grid.setHTML(row+1, col, NULL_DISPLAY_VALUE);
 					}
-					
 				}
 			} else {
 				// Fill empty row in the table
 				for (int col=0; col<this.columns.length; col++) {
 					grid.setHTML(row+1, col, NULL_DISPLAY_VALUE);
 				}
-			}
+			}			
+		}
+		
+		if (this.allowRowMark) {
+			redrawCheckBoxes();
 		}
 		
 		this.selectedRowIndex = NO_ROW_SELECTED;
@@ -520,7 +574,38 @@ public class AdvancedTable extends Composite {
 		
 		fixGridSize();
 	}
-	
+
+	private void redrawCheckBoxes() {
+		for (int row=0; row<this.pageSize; row++) {
+			if (row < this.currentPageRowsCount) {
+				final CheckBox checkBox = new CheckBox();
+				String rowId = this.pageRows[row][0];
+				if (this.markedRows.contains(rowId)) {
+					checkBox.setChecked(true);
+				}
+				final int currentRow = row;
+				checkBox.addClickListener(new ClickListener() {
+					public void onClick(Widget sender) {
+						checkBoxChanged(currentRow, checkBox.isChecked());
+					}
+				});
+				grid.setWidget(row+1, 0, checkBox);
+				grid.getCellFormatter().setHorizontalAlignment(
+					row+1, 0, HasHorizontalAlignment.ALIGN_CENTER);
+			}		
+		}		
+	}
+
+	private void checkBoxChanged(int row, boolean checked) {
+		String rowId = this.pageRows[row][0];
+		if (checked) {
+			this.markedRows.add(rowId);
+		}
+		else {
+			this.markedRows.remove(rowId);
+		}
+	}
+
 	/**
 	 * Change the CSS styles of all rows. The currently selected row
 	 * gets different CSS style.
@@ -550,6 +635,10 @@ public class AdvancedTable extends Composite {
 
 	private void cellClicked(int row, int column) {
 		if (row == 0) {
+			if ((column == 0) && (this.allowRowMark)) {
+				// Sorting by the "mark" column is not allowed
+				return;
+			}
 			String columnName = this.columns[column].getName();
 			this.applySorting(columnName);
 		} else {
@@ -636,6 +725,52 @@ public class AdvancedTable extends Composite {
 		}
 	}
 	
+	/**
+	 * @return a set of row identifiers that are currently marked in the table.
+	 * Row identifiers are strings (primary key) that uniquely identifies a row.
+	 */
+	public Set getMarkedRows() {
+		return this.markedRows;
+	}
+	
+	/**
+	 * Removes the "mark" from all the rows in the table.
+	 */
+	public void clearMarkedRows() {
+		this.markedRows.clear();
+		redrawCheckBoxes();
+	}
+	
+	/**
+	 * Marks all rows in the table matching the current filters without
+	 * clearing the currently marked rows. Attention: This operation
+	 * causes all data rows to be retrieved from the server side and
+	 * this could be slow. 
+	 */
+	public void markAllRows() {
+		// Asynchronously get all data rows from the server
+		this.tableModelService.getRows(0, this.totalRowsCount, this.filters, null, false,
+				new AsyncCallback() {
+			public void onFailure(Throwable caught) {
+				AdvancedTable.this.showStatus(
+					"Can not get table data rows from the server.",
+					STATUS_ERROR);
+			}
+			public void onSuccess(Object result) {
+				String[][] allTableRows = (String[][]) result;
+				AdvancedTable.this.markRows(allTableRows);
+			}
+		});
+	}
+	
+	private void markRows(String[][] allTableRows) {
+		for (int row=0; row<allTableRows.length; row++) {
+			String rowId = allTableRows[row][0];
+			this.markedRows.add(rowId);
+		}
+		redrawCheckBoxes();		
+	}
+
 	private void fixGridSize() {
 		// Fix scroll panel width
 		String originalWidth =
@@ -661,5 +796,6 @@ public class AdvancedTable extends Composite {
 		int newHeight = originalHeight - NAVIGATION_PANEL_HEIGHT;
 		scrollPanelGrid.setHeight("" + newHeight + "px");
 	}
+
 	
 }
