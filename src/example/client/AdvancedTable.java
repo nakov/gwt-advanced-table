@@ -606,9 +606,21 @@ public class AdvancedTable extends Composite {
 		}
 	}
 
+
+
+
+    /**
+     * Override this to customize CSS styles on a row-by-row basis based on the underlying data for each row
+     * @param rowData values in the cells (columns) of the row
+     * @return the CSS style name to be applied to the row
+     */
+    protected String getRowStyle(String[] rowData) {
+            return null;
+    }
+
 	/**
-	 * Change the CSS styles of all rows. The currently selected row
-	 * gets different CSS style.
+	 * Change the CSS styles of all rows, custom styles may be applied based on each row's 
+	 * underlying data. The currently selected row gets a different CSS style. 
 	 */
 	private void redrawSelectedRow() {
 		RowFormatter gridRowFormatter = grid.getRowFormatter();
@@ -617,7 +629,9 @@ public class AdvancedTable extends Composite {
 				gridRowFormatter.setStyleName(row, SELECTED_ROW_STYLE);
 			}
 			else {
-				gridRowFormatter.setStyleName(row, DEFAULT_ROW_STYLE);
+                String customStyle = getRowStyle(pageRows[row-1]);
+                gridRowFormatter.setStyleName(row, customStyle == null ?
+DEFAULT_ROW_STYLE : customStyle);
 			}
 		}
 	}
